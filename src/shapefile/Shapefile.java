@@ -33,7 +33,8 @@ import javafx.scene.layout.*;
 
 public class Shapefile extends Application {
 
-    private final ObservableList ops = FXCollections.observableArrayList("==", "!=", ">", "<");
+    //find a way to make it dynamic may be
+    private final ObservableList ops = FXCollections.observableArrayList("Top", "Bottom", "equals", "contains", "Starts With", "Ends with", "==", "!=", ">", "<");
     private final ObservableList joints = FXCollections.observableArrayList("AND", "OR");
     private ObservableList proprties;
 
@@ -77,8 +78,28 @@ public class Shapefile extends Application {
 
             @Override
             public void handle(Event event) {
-                jdbc.createShapefile(getQuery());
+                String parsedInput = parseUIInput(getInputParameters());
+//                jdbc.createShapefile(getInputParameters());
+                jdbc.createShapefile(parsedInput);
+                // Closes the Window
                 Platform.exit();
+            }
+
+            private String parseUIInput(String inputString) {
+                String temp = inputString;
+                String[] words = temp.split("\\s+");
+                System.out.println("words[0] :" + words[0]);
+                System.out.println("words[1] :" + words[1]);
+                System.out.println("words[2] :" + words[2]);
+                String order = "";
+                String queryString = "";              
+                String parentTableName = "STATES";//"NEW_TABLE_NAME";
+                if (words[1].equals("Top")) {
+                    order = "desc";
+                }
+                queryString = "select * from (select * from " + parentTableName + " order by " + words[0] + " " + order + ") where rownum <=" + words[2];                             
+                return queryString;              
+                //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
             }
         });
 
@@ -87,17 +108,19 @@ public class Shapefile extends Application {
     }
 
     //obtain value from the grid and form a query 
-    private String getQuery() {
+    private String getInputParameters() {
         String query = "";
         ObservableList<Node> children = queryGrid.getChildren();
 
         //loop through grid
         for (int i = 0; i < gridRowCount + 1; i++) {
             if (i != 0) {
+                //this is where it fails if not value specified 
                 query += " " + ((ComboBox) children.get(i * 5)).getValue().toString() + " ";
             }
 
             query += ((ComboBox) children.get(i * 5 + 1)).getValue().toString() + " ";
+            //place to decide which query to call
             query += ((ComboBox) children.get(i * 5 + 2)).getValue().toString() + " ";
             query += ((TextField) children.get(i * 5 + 3)).getText();
         }
@@ -236,5 +259,32 @@ public class Shapefile extends Application {
 
     public static void main(String[] args) {
         launch(args);
+    }
+
+    public String parseDirectValues(String query) {
+        String baseQuery = query;
+        String finalQuery = "";
+        String[] individualItems = baseQuery.split("[ ]+");
+
+        for (int i = 0; i < individualItems.length; i++) {
+            System.out.println(individualItems[i]);
+        }
+
+        for (int i = 0; i < individualItems.length; i += 4) {
+            String clause = "";
+            String criteriaName = individualItems[i];
+            String criteriaCondition = individualItems[i + 1];
+            String criteriaValue = individualItems[i + 2];
+            clause = "(" + criteriaName + criteriaCondition + criteriaValue + ")";
+            String conjuction = "";
+            if (individualItems.length > i + 3) {
+                conjuction = individualItems[i + 3];
+            }
+            finalQuery += clause + " " + conjuction + " ";
+        }
+
+        String baseTableQuery = "CREATE TABLE TABLE_NAME AS (select * from states where ";
+        String finalQueryString = baseTableQuery + finalQuery + ")";
+        return finalQueryString;
     }
 }
