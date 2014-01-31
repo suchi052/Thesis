@@ -86,6 +86,31 @@ public class Shapefile extends Application {
             }
 
             private String parseUIInput(String inputString) {
+                String queryString ="";
+                if (inputString.contains("Top")||inputString.contains("Bottom")){
+                    queryString = topBottom(inputString);
+                }
+                else {
+                   queryString = parseDirectValues(inputString);
+                }
+//                String temp = inputString;
+//                String[] words = temp.split("\\s+");
+//                System.out.println("words[0] :" + words[0]);
+//                System.out.println("words[1] :" + words[1]);
+//                System.out.println("words[2] :" + words[2]);
+//                String order = "";
+//                String queryString = "";              
+//                String parentTableName = "STATES";//"NEW_TABLE_NAME";
+//                if (words[1].equals("Top")) {
+//                    order = "desc";
+//                }
+//                queryString = "select * from (select * from " + parentTableName + " order by " + words[0] + " " + order + ") where rownum <=" + words[2];                             
+                return queryString;              
+                //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+            
+            
+            private String topBottom(String inputString){
                 String temp = inputString;
                 String[] words = temp.split("\\s+");
                 System.out.println("words[0] :" + words[0]);
@@ -98,8 +123,7 @@ public class Shapefile extends Application {
                     order = "desc";
                 }
                 queryString = "select * from (select * from " + parentTableName + " order by " + words[0] + " " + order + ") where rownum <=" + words[2];                             
-                return queryString;              
-                //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                return queryString; 
             }
         });
 
@@ -275,7 +299,7 @@ public class Shapefile extends Application {
             String criteriaName = individualItems[i];
             String criteriaCondition = individualItems[i + 1];
             String criteriaValue = individualItems[i + 2];
-            clause = "(" + criteriaName + criteriaCondition + criteriaValue + ")";
+            clause = "(" + criteriaName + " " + criteriaCondition + " " + criteriaValue + ")";
             String conjuction = "";
             if (individualItems.length > i + 3) {
                 conjuction = individualItems[i + 3];
@@ -283,7 +307,7 @@ public class Shapefile extends Application {
             finalQuery += clause + " " + conjuction + " ";
         }
 
-        String baseTableQuery = "CREATE TABLE TABLE_NAME AS (select * from states where ";
+        String baseTableQuery = "(select * from states where ";
         String finalQueryString = baseTableQuery + finalQuery + ")";
         return finalQueryString;
     }
